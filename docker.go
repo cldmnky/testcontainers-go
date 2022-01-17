@@ -29,7 +29,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/magiconair/properties"
 	"github.com/moby/term"
-	"github.com/sirupsen/logrus"
 
 	"github.com/testcontainers/testcontainers-go/wait"
 )
@@ -555,7 +554,6 @@ func NewDockerProvider() (*DockerProvider, error) {
 		// setup a ssh client connection
 		helper, err := connhelper.GetConnectionHelper(dockerHost)
 		if err != nil {
-			logrus.Debugf("unable to get ssh connection helper: %s", err)
 			return nil, err
 		}
 		httpClient := &http.Client{
@@ -569,6 +567,9 @@ func NewDockerProvider() (*DockerProvider, error) {
 			client.WithDialContext(helper.Dialer),
 			client.WithAPIVersionNegotiation(),
 		)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		c, err = client.NewClientWithOpts(opts...)
 		if err != nil {

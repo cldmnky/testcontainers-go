@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/Microsoft/hcsshim v0.8.16 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.2
+	github.com/docker/cli v20.10.12+incompatible
 	github.com/docker/docker v20.10.11+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/go-redis/redis v6.15.9+incompatible
@@ -17,6 +18,7 @@ require (
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6
 	github.com/morikuni/aec v0.0.0-20170113033406-39771216ff4c // indirect
 	github.com/opencontainers/runc v1.0.2 // indirect
+	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/net v0.0.0-20211108170745-6635138e15ea // indirect
 	golang.org/x/sys v0.0.0-20211124211545-fe61309f8881
