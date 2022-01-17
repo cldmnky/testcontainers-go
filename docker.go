@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
@@ -17,6 +18,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	"github.com/docker/cli/cli/connhelper"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
@@ -27,6 +29,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/magiconair/properties"
 	"github.com/moby/term"
+	"github.com/sirupsen/logrus"
 
 	"github.com/testcontainers/testcontainers-go/wait"
 )
@@ -527,6 +530,7 @@ type TestContainersConfig struct {
 
 // NewDockerProvider creates a Docker provider with the EnvClient
 func NewDockerProvider() (*DockerProvider, error) {
+	var c *client.Client
 	tcConfig := readTCPropsFile()
 	host := tcConfig.Host
 
@@ -544,9 +548,32 @@ func NewDockerProvider() (*DockerProvider, error) {
 		}
 	}
 
-	c, err := client.NewClientWithOpts(opts...)
-	if err != nil {
-		return nil, err
+	// support SSH tunneled clients
+	dockerHost := os.Getenv("DOCKER_HOST")
+	docker_url, err := url.Parse(dockerHost)
+	if err == nil && docker_url.Scheme == "ssh" {
+		// setup a ssh client connection
+		helper, err := connhelper.GetConnectionHelper(dockerHost)
+		if err != nil {
+			logrus.Debugf("unable to get ssh connection helper: %s", err)
+			return nil, err
+		}
+		httpClient := &http.Client{
+			Transport: &http.Transport{
+				DialContext: helper.Dialer,
+			},
+		}
+		c, err = client.NewClientWithOpts(
+			client.WithHTTPClient(httpClient),
+			client.WithHost(helper.Host),
+			client.WithDialContext(helper.Dialer),
+			client.WithAPIVersionNegotiation(),
+		)
+	} else {
+		c, err = client.NewClientWithOpts(opts...)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	_, err = c.Ping(context.TODO())
